@@ -18,7 +18,7 @@ public class Controllers : ControllerBase
     {
         if (await _dbService.DoesBookExist(bookID))
         {
-            return Ok(_dbService.GetBook(bookID));
+            return Ok(await _dbService.GetBook(bookID));
         }
 
         return NotFound();
