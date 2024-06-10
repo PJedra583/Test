@@ -20,12 +20,16 @@ public class DbService : IDbService
 
     public async Task<ExampleDTO> GetBook(int bookID)
     {
-        return await _context.Books.Include(e => e.Author)
+        var book = await _context.Books
+            .Include(e => e.Author)
             .Where(e => e.Id == bookID)
-            .Select(async e => new ExampleDTO()
-            {
-                author = e.Author,
-                book = await _context.Books.Where(e => e.Id == bookID).FirstOrDefaultAsync()
-            }).FirstOrDefault();
+            .FirstOrDefaultAsync();
+        
+        var exampleDTO = new ExampleDTO()
+        {
+            author = book.Author,
+            book = book
+        };
+        return exampleDTO;
     }
 }
