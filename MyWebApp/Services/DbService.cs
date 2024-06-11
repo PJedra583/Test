@@ -13,23 +13,74 @@ public class DbService : IDbService
         _context = context;
     }
     
-    public async Task<bool> DoesBookExist(int bookID)
+    public async Task<bool> DoesCharacterExist(int characterId)
     {
-        return await _context.Books.AnyAsync(e=>e.Id == bookID);
+        return await _context.characters.AnyAsync(e=>e.Id == characterId);
     }
 
-    public async Task<ExampleDTO> GetBook(int bookID)
+    public async Task<ExampleDTO> GetCharacterInfo(int characterId)
     {
-            var book = await _context.Books
-                .Include(e => e.Author)
-                .FirstOrDefaultAsync(e => e.Id == bookID);
+        var character = await _context.characters
+            .Where(e => e.Id == characterId)
+            .FirstOrDefaultAsync();
             
             var exampleDTO = new ExampleDTO
             {
-                AuthorName = book.Author.Name,
-                BookName = book.Title
+                firstName = character.FirstName,
+                lastName = character.LastName,
+                currentWeight = character.CurrentWeight,
+                maxWeight = character.MaxWeight,
+                backpackItems = await _context.backpacks
+                    .Where(e=>character.Id == characterId)
+                    .Select(e=>e.Item)
+                    .ToListAsync(),
+                titles = await _context.character_titles
+                    .Where(e=>e.Character.Id == characterId)
+                    .Select(e=> e.Title)
+                    .ToListAsync()
             };
 
             return exampleDTO;
+    }
+
+    public async Task<bool> DoesItemsExist(List<int> list)
+    {
+        foreach (var VARIABLE in list)
+        {
+            if (!await _context.items.AnyAsync(e => e.Id == VARIABLE))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public async Task<bool> AddItems(List<int> list,int characterId)
+    {
+        var character = await _context.characters
+            .Where(e => e.Id == characterId)
+            .FirstOrDefaultAsync();
+        int capacity = character.MaxWeight;
+        int actuall_weight = character.CurrentWeight;
+        foreach (var VARIABLE in list)
+        {
+            Item item = await _context.items.Where(e => e.Id == VARIABLE).FirstOrDefaultAsync();
+            if (actuall_weight + item.Weight > capacity)
+            {
+                return false;
+            }
+            else
+            {
+                _context.backpacks.Add(new Backpack()
+                {
+                    ItemId = item.Id,
+                    Amount = 1,
+                    CharacterId = characterId
+                });
+            }
+        }
+
+        await _context.SaveChangesAsync();
+        return true;
     }
 }

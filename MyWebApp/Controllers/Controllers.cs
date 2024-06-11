@@ -13,14 +13,28 @@ public class Controllers : ControllerBase
         _dbService = dbService;
     }
 
-    [HttpPost("/api/{bookID}")]
-    public async Task<IActionResult> GetBook(int bookID)
+    [HttpGet("/api/characters/{characterId}")]
+    public async Task<IActionResult> GetInfo(int characterId)
     {
-        if (await _dbService.DoesBookExist(bookID))
+        if (!await _dbService.DoesCharacterExist(characterId))
         {
-            return Ok(await _dbService.GetBook(bookID));
+            return NotFound();
+        }
+        return Ok(await _dbService.GetCharacterInfo(characterId));
+    }
+    [HttpPost("/api/characters/{characterId}/backpacks")]
+    public async Task<IActionResult> PutInfo(List<int> list,int characterId)
+    {
+        if (!await _dbService.DoesItemsExist(list))
+        {
+            return NotFound();
         }
 
-        return NotFound();
+        if (await _dbService.AddItems(list,characterId))
+        {
+            return Ok();
+        }
+        return BadRequest();
     }
+
 }
